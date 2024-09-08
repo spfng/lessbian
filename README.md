@@ -17,3 +17,14 @@ user    6m37.707s
 sys     0m49.422s
 ```
 
+Для сборки рекомендуется использовать локальное зеркало Debian, в таком случае можно минимизировать время сборки и у меня оно составляет около 3х минут.
+
+Скриншоты:
+
+![screenshot](contrib/screenshots/hardware.png)
+
+![screenshot](contrib/screenshots/syslinux.png)
+
+![screenshot](contrib/screenshots/grub2.png)
+
+![screenshot](contrib/screenshots/top.png)
