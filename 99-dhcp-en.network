@@ -6,4 +6,3 @@ DHCP=yes
 
 [DHCP]
 ClientIdentifier=mac
-

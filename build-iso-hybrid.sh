@@ -1,10 +1,5 @@
 #!/bin/bash
 
-echo Read config
-source config.sh
-echo Codename: $codename
-echo Mirror: $mirror
-
 echo Install required tools
 apt-get update
 apt-get -y install debootstrap squashfs-tools xorriso isolinux syslinux-efi grub-pc-bin grub-efi-amd64-bin mtools dosfstools zstd
@@ -14,16 +9,11 @@ TEMP=`mktemp -d -p $PWD build.XXX`
 install -d $TEMP/live_boot
 
 echo Install Debian
-debootstrap --arch=amd64 --variant=minbase $codename $TEMP/live_boot/chroot http://$mirror/debian/
+debootstrap --arch=amd64 --variant=minbase bookworm $TEMP/live_boot/chroot http://192.168.1.144/debian/
 
 echo Copy supporting documents into the chroot
 cp -v $PWD/setup-chroot.sh $TEMP/live_boot/chroot/setup-chroot.sh
-cp -v $PWD/sources.list.tpl $TEMP/live_boot/chroot/etc/apt/sources.list
-sed -i "s/%mirror%/$mirror/g" $TEMP/live_boot/chroot/etc/apt/sources.list
-sed -i "s/%codename%/$codename/g" $TEMP/live_boot/chroot/etc/apt/sources.list
-cp -v $PWD/rc-local.service $TEMP/live_boot/chroot/etc/systemd/system/rc-local.service
-install -m 0755 -v $PWD/rc.local $TEMP/live_boot/chroot/etc/rc.local
-cp -v $PWD/authorized_keys $TEMP/live_boot/chroot/root
+cp -v $PWD/sources.list $TEMP/live_boot/chroot/etc/apt/sources.list
 
 echo Mounting dev / proc / sys
 mount -t proc none $TEMP/live_boot/chroot/proc
