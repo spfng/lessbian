@@ -53,8 +53,8 @@ echo "\4 \6" > /etc/issue.d/ip-addresses.issue
 echo "" >> /etc/issue.d/ip-addresses.issue
 
 echo Set root password and share it
-openssl rand -base64 22 > /var/www/html/password
-echo "root:$(cat /var/www/html/password)" | chpasswd
+openssl rand -base64 20 > /root/.root-password
+echo "root:$(cat /root/.root-password)" | chpasswd
 
 echo Generate ssh-key and populate it
 install -d -o root -g root /root/bin
@@ -63,21 +63,23 @@ cat > /root/bin/ssh_keyring_generate.sh <<"EOF"
 ssh-keygen -q -t ed25519 -N "" -C "" -f /root/.ssh/id_ed25519
 install -D -o root -g root -m 0644 /root/.ssh/id_ed25519.pub /root/.ssh/authorized_keys
 EOF
-chmod +x /root/bin/ssh_keyring_generate.sh
-echo "@reboot root bash /root/bin/ssh_keyring_generate.sh" >> /etc/crontab
+chmod 0777 /root/bin/ssh_keyring_generate.sh
+echo "@reboot bash /root/bin/ssh_keyring_generate.sh" >> /var/spool/cron/crontabs/root
+chmod 0600 /var/spool/cron/crontabs/root
 
 cat > /root/bin/ssh_keyring_populate.sh <<"EOF"
 #!/bin/bash
 for ip in $(hostname -I); do
-md5=$(md5sum <<< "$ip + password" | awk '{ print $1 }')
-install -d -o www-data -g www-data -m 0755 /var/www/html/keyring
-install -d -o www-data -g www-data -m 0755 /var/www/html/keyring/$md5
-install -D -o www-data -g www-data -m 0644 /root/.ssh/id_ed25519 /var/www/html/keyring/$md5/id_ed25519
-install -D -o www-data -g www-data -m 0644 /root/.ssh/id_ed25519.pub /var/www/html/keyring/$md5/id_ed25519.pub
+md5=($(md5sum <<< "$ip + password"))
+install -d -o www-data -g www-data -m 0755 /var/www/html/ssh-keyring
+install -d -o www-data -g www-data -m 0755 /var/www/html/ssh-keyring/$md5
+install -D -o www-data -g www-data -m 0644 /root/.ssh/id_ed25519 /var/www/html/ssh-keyring/$md5/id_ed25519
+install -D -o www-data -g www-data -m 0644 /root/.ssh/id_ed25519.pub /var/www/html/ssh-keyring/$md5/id_ed25519.pub
 done
 EOF
-chmod +x /root/bin/ssh_keyring_populate.sh
-echo "* * * * * root bash /root/bin/ssh_keyring_populate.sh" >> /etc/crontab
+chmod 0777 /root/bin/ssh_keyring_populate.sh
+echo "* * * * * bash /root/bin/ssh_keyring_populate.sh" >> /var/spool/cron/crontabs/root
+chmod 0600 /var/spool/cron/crontabs/root
 
 echo Setup nginx
 make-ssl-cert generate-default-snakeoil
@@ -94,12 +96,6 @@ ksmbd.addshare -u "media" -o "force group = root"
 ksmbd.addshare -u "media" -o "force user = root"
 ksmbd.addshare -u "media" -o "guest ok = yes"
 ksmbd.addshare -u "media" -o "writeable = yes"
-ksmbd.addshare -a "www" -o "path = /var/www"
-ksmbd.addshare -u "www" -o "force group = www-data"
-ksmbd.addshare -u "www" -o "force user = www-data"
-ksmbd.addshare -u "www" -o "guest ok = yes"
-ksmbd.addshare -u "www" -o "writeable = yes"
-chown -R www-data:www-data /var/www/html
 
 echo Disable MOTD
 echo -n "" > /etc/motd
