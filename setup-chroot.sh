@@ -57,17 +57,17 @@ openssl rand -base64 20 > /root/.root-password
 echo "root:$(cat /root/.root-password)" | chpasswd
 
 echo Generate ssh-key and populate it
-install -d -o root -g root /root/bin
-cat > /root/bin/ssh_keyring_generate.sh <<"EOF"
+install -d -o root -g root /root/.local/bin
+cat > /root/.local/bin/ssh_keyring_generate.sh <<"EOF"
 #!/bin/bash
 ssh-keygen -q -t ed25519 -N "" -C "" -f /root/.ssh/id_ed25519
 install -D -o root -g root -m 0644 /root/.ssh/id_ed25519.pub /root/.ssh/authorized_keys
 EOF
-chmod 0777 /root/bin/ssh_keyring_generate.sh
-echo "@reboot bash /root/bin/ssh_keyring_generate.sh" >> /var/spool/cron/crontabs/root
+chmod 0777 /root/.local/bin/ssh_keyring_generate.sh
+echo "@reboot bash /root/.local/bin/ssh_keyring_generate.sh" >> /var/spool/cron/crontabs/root
 chmod 0600 /var/spool/cron/crontabs/root
 
-cat > /root/bin/ssh_keyring_populate.sh <<"EOF"
+cat > /root/.local/bin/ssh_keyring_populate.sh <<"EOF"
 #!/bin/bash
 for ip in $(hostname -I); do
 md5=($(md5sum <<< "$ip + password"))
@@ -77,8 +77,8 @@ install -D -o www-data -g www-data -m 0644 /root/.ssh/id_ed25519 /var/www/html/s
 install -D -o www-data -g www-data -m 0644 /root/.ssh/id_ed25519.pub /var/www/html/ssh-keyring/$md5/id_ed25519.pub
 done
 EOF
-chmod 0777 /root/bin/ssh_keyring_populate.sh
-echo "* * * * * bash /root/bin/ssh_keyring_populate.sh" >> /var/spool/cron/crontabs/root
+chmod 0777 /root/.local/bin/ssh_keyring_populate.sh
+echo "* * * * * bash /root/.local/bin/ssh_keyring_populate.sh" >> /var/spool/cron/crontabs/root
 chmod 0600 /var/spool/cron/crontabs/root
 
 echo Setup nginx
