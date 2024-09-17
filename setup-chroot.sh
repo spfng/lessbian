@@ -40,9 +40,6 @@ systemctl enable systemd-resolved
 echo Enable systemd-timesyncd as ntp daemon
 systemctl enable systemd-timesyncd
 
-echo Masking systemd scrap
-#systemctl mask systemd-networkd-wait-online.service
-
 echo Showing IP-addresses on tty
 mkdir -p /etc/issue.d
 echo "\4 \6" > /etc/issue.d/ip-addresses.issue
