@@ -95,4 +95,5 @@ xorriso \
 
 echo Output
 echo $TEMP/live_boot/output.iso
+cp $TEMP/live_boot/output.iso /srv/mirrors
 

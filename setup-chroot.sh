@@ -24,8 +24,7 @@ apt-get install -y --no-install-recommends linux-image-amd64 libpam-systemd live
 apt-get install -y --no-install-recommends amd64-microcode intel-microcode
 apt-get install -y --no-install-recommends firmware-linux-free
 apt-get install -y --no-install-recommends cron nginx
-apt-get install -y bash-completion cifs-utils curl dbus dosfstools fdisk gdisk iputils-ping isc-dhcp-client ksmbd-tools less openssh-client openssh-server procps ssl-cert vim wget wireguard-tools wpasupplicant
-apt-get install -y dmidecode lshw mstflint sg3-utils smartmontools
+apt-get install -y bash-completion cifs-utils curl dbus dmidecode dosfstools fdisk gdisk iputils-ping isc-dhcp-client ksmbd-tools less lshw openssh-client openssh-server procps smartmontools ssl-cert vim wget wireguard-tools wpasupplicant
 
 echo Clean apt
 apt clean
@@ -40,6 +39,20 @@ systemctl enable systemd-resolved
 echo Enable systemd-timesyncd as ntp daemon
 systemctl enable systemd-timesyncd
 
+echo Avoid problem to booting if you have a few network interfaces 
+mkdir /etc/systemd/system/systemd-networkd-wait-online.service.d
+cat > /etc/systemd/system/systemd-networkd-wait-online.service.d/wait-for-only-one-interface.conf <<EOF
+[Service]
+ExecStart=
+ExecStart=/usr/lib/systemd/systemd-networkd-wait-online --any
+EOF
+
+echo Disable smartmontools
+rm /etc/systemd/system/multi-user.target.wants/smartmontools.service
+
+echo Disable wpa_supplicant
+rm /etc/systemd/system/multi-user.target.wants/wpa_supplicant.service
+
 echo Showing IP-addresses on tty
 mkdir -p /etc/issue.d
 echo "\4 \6" > /etc/issue.d/ip-addresses.issue
@@ -50,7 +63,7 @@ openssl rand -base64 22 > /var/www/html/password
 echo "root:$(cat /var/www/html/password)" | chpasswd
 
 echo Generate ssh-key and share it
-ssh-keygen -q -t ed25519 -N "" -f -C ""
+ssh-keygen -q -t ed25519 -N "" -C ""
 install -D -m 0644 /root/.ssh/id_ed25519.pub /root/.ssh/authorized_keys
 install -D -m 0644 /root/.ssh/id_ed25519 /var/www/html/id_ed25519
 install -D -m 0644 /root/.ssh/id_ed25519.pub /var/www/html/id_ed25519.pub
@@ -83,7 +96,4 @@ rm /etc/update-motd.d/10-uname
 
 echo Remove machine-id
 rm /etc/machine-id
-
-echo List installed packages
-dpkg-query -W -f='${Package}\t${Version}\t${Installed-Size}\n' | sort -k3 -n | tee /root/installed.txt
 
